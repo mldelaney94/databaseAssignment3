@@ -72,14 +72,16 @@ WITH roles_cte AS (
            FROM amalgamation_cte amalgamation_cte_1));
  
  Q7
-  SELECT titles.main_title AS title,
-    array_agg(title_genres.genre ORDER BY title_genres.genre) AS genres
-   FROM title_genres,
-    titles
-  WHERE title_genres.title_id = titles.id AND titles.format = 'movie'::text
-  GROUP BY titles.main_title
- HAVING count(title_genres.genre) > 2
-  ORDER BY titles.main_title;
+with numgenres as(
+select title_id , array_agg(genre order by genre) as ngenres
+from title_genres
+group by title_id
+having count(genre) > 3
+)
+
+select titles.main_title, numgenres.ngenres
+from titles, numgenres
+where titles.id = numgenres.title_id and titles.format = 'movie'
   
 Q8
  SELECT names.name
