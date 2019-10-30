@@ -31,19 +31,18 @@ Q4
   ORDER BY titles.main_title;
   
 Q5
- WITH cte AS (
-         SELECT titles.main_title AS title,
-            count(DISTINCT aliases.language) AS num_lang
-           FROM titles,
-            aliases
-          WHERE aliases.title_id = titles.id AND titles.format = 'movie'::text
-          GROUP BY titles.main_title
+WITH lang AS (
+         SELECT aliases.title_id,
+            count(DISTINCT aliases.language) AS num_langs
+           FROM aliases
+          GROUP BY aliases.title_id
         )
- SELECT cte.title,
-    cte.num_lang AS nlanguages
-   FROM cte
-  WHERE cte.num_lang = (( SELECT max(cte_1.num_lang) AS max
-           FROM cte cte_1));
+ SELECT titles.main_title AS title,
+    lang.num_langs AS nlanguages
+   FROM titles,
+    lang
+  WHERE titles.id = lang.title_id AND lang.num_langs = (( SELECT max(lang_1.num_langs) AS max
+           FROM lang lang_1)) AND titles.format = 'movie'
            
 Q6
 WITH roles_cte AS (
