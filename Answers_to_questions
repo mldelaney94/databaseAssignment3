@@ -16,8 +16,8 @@ Q3
     titles.nvotes
    FROM titles
   WHERE titles.format = 'movie'::text AND titles.nvotes::integer > 1000
-  GROUP BY titles.main_title, titles.rating, titles.nvotes
-  ORDER BY titles.rating DESC, titles.main_title
+  GROUP BY titles.main_title, titles.nvotes
+  ORDER BY (max(titles.rating)) DESC, titles.main_title
  LIMIT 10;
   
 Q4
