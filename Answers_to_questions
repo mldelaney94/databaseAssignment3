@@ -1,0 +1,98 @@
+Q1
+SELECT titles.main_title AS title
+   FROM titles
+  WHERE titles.runtime::integer > 360 AND titles.format = 'movie'::text
+  ORDER BY titles.main_title;
+  
+Q2
+ SELECT titles.format,
+    count(titles.format) AS ntitles
+   FROM titles
+  GROUP BY titles.format;
+  
+Q4
+ SELECT titles.main_title AS title,
+    count(episodes.*) AS nepisodes
+   FROM episodes,
+    titles
+  WHERE episodes.parent_id = titles.id AND titles.rating = (( SELECT max(titles_1.rating) AS max
+           FROM titles titles_1))
+  GROUP BY titles.main_title, episodes.parent_id, titles.rating
+  ORDER BY titles.main_title;
+  
+Q5
+ WITH cte AS (
+         SELECT titles.main_title AS title,
+            count(DISTINCT aliases.language) AS num_lang
+           FROM titles,
+            aliases
+          WHERE aliases.title_id = titles.id AND titles.format = 'movie'::text
+          GROUP BY titles.main_title
+        )
+ SELECT cte.title,
+    cte.num_lang AS nlanguages
+   FROM cte
+  WHERE cte.num_lang = (( SELECT max(cte_1.num_lang) AS max
+           FROM cte cte_1));
+           
+Q6
+WITH roles_cte AS (
+         SELECT names.name
+           FROM names,
+            worked_as
+          WHERE names.id = worked_as.name_id AND worked_as.work_role = 'actor'::text
+        ), rating_cte AS (
+         SELECT names.name,
+            avg(titles.rating) AS avgrating
+           FROM known_for,
+            titles,
+            names
+          WHERE known_for.name_id = names.id AND titles.id = known_for.title_id AND titles.rating IS NOT NULL AND titles.format = 'movie'::text
+          GROUP BY names.name
+         HAVING count(titles.id) > 1
+        ), amalgamation_cte AS (
+         SELECT rating_cte.name,
+            rating_cte.avgrating
+           FROM rating_cte,
+            roles_cte
+          WHERE rating_cte.name = roles_cte.name
+        )
+ SELECT amalgamation_cte.name
+   FROM amalgamation_cte
+  WHERE amalgamation_cte.avgrating = (( SELECT max(amalgamation_cte_1.avgrating) AS max
+           FROM amalgamation_cte amalgamation_cte_1));
+ 
+ Q7
+  SELECT titles.main_title AS title,
+    array_agg(title_genres.genre ORDER BY title_genres.genre) AS genres
+   FROM title_genres,
+    titles
+  WHERE title_genres.title_id = titles.id AND titles.format = 'movie'::text
+  GROUP BY titles.main_title
+ HAVING count(title_genres.genre) > 2
+  ORDER BY titles.main_title;
+  
+Q8
+ SELECT names.name
+   FROM names,
+    actor_roles,
+    crew_roles,
+    titles
+  WHERE names.id = actor_roles.name_id AND titles.id = actor_roles.title_id AND titles.id = crew_roles.title_id AND crew_roles.name_id = actor_roles.name_id AND titles.format = 'movie'::text
+  GROUP BY names.name;
+
+Q9
+ WITH cte AS (
+         SELECT names.name,
+            titles.start_year::integer - names.birth_year::integer AS age
+           FROM principals,
+            titles,
+            names
+          WHERE principals.name_id = names.id AND principals.title_id = titles.id AND (titles.start_year::integer - names.birth_year::integer) > 0 AND titles.format = 'movie'::text AND principals.job_cat = 'actor'::text
+          ORDER BY (titles.start_year::integer - names.birth_year::integer)
+        )
+ SELECT cte.name,
+    cte.age
+   FROM cte
+  WHERE cte.age = (( SELECT min(cte_1.age) AS min
+           FROM cte cte_1));
