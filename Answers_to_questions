@@ -10,6 +10,16 @@ Q2
    FROM titles
   GROUP BY titles.format;
   
+Q3
+ SELECT titles.main_title AS title,
+    max(titles.rating) AS rating,
+    titles.nvotes
+   FROM titles
+  WHERE titles.format = 'movie'::text AND titles.nvotes::integer > 1000
+  GROUP BY titles.main_title, titles.rating, titles.nvotes
+  ORDER BY titles.rating DESC, titles.main_title
+ LIMIT 10;
+  
 Q4
  SELECT titles.main_title AS title,
     count(episodes.*) AS nepisodes
